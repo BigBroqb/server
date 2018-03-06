@@ -3,13 +3,15 @@ import logging
 from datetime import datetime
 from cassandra.cluster import Cluster
 # cluster = Cluster()
-# session = cluster.connect()
- 
+# session = cluster.connect() 
 logging.basicConfig(filename="/var/www/bigapp/logs/" + datetime.now().strftime('bigapp_%Y_%m_%d_%H_%M.log'), level=logging.DEBUG)
 app = Flask(__name__)
- 
+
 from facebook import GraphAPI
-graph = GraphAPI(access_token="216064342468691|KtxNEAMbJLhAs1kZTtw5Ym_YnYo")
+fb_key = ''
+with open('/var/www/bigapp/key.txt', 'r') as f:
+    fb_key  = f.read().replace('\n', '')
+graph = GraphAPI(access_token=fb_key)
 demo = {}
 @app.route('/demo/<name>',methods=['GET'])
 def class_demo(name):
