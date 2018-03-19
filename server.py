@@ -1,7 +1,7 @@
 from flask import Flask, request
 import logging
 from datetime import datetime
-from cassandra.cluster import Cluster
+# from cassandra.cluster import Cluster
 # cluster = Cluster()
 # session = cluster.connect() 
 logging.basicConfig(filename="/var/www/bigapp/logs/" + datetime.now().strftime('bigapp_%Y_%m_%d_%H_%M.log'), level=logging.DEBUG)
