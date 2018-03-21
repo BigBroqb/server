@@ -1,17 +1,33 @@
+# Start Flask server
 from flask import Flask, request
+app = Flask(__name__)
+if __name__ == '__main__':
+    app.run(debug=True, port=3000)
+
+
+# Add logging
 import logging
 from datetime import datetime
-# from cassandra.cluster import Cluster
-# cluster = Cluster()
-# session = cluster.connect() 
 logging.basicConfig(filename="/var/www/bigapp/logs/" + datetime.now().strftime('bigapp_%Y_%m_%d_%H_%M.log'), level=logging.DEBUG)
-app = Flask(__name__)
 
+@app.before_request
+def log_request_info():
+    logging.debug('Headers: %s', request.headers)
+    logging.debug('Body: %s', request.get_data())
+
+
+# Start MongoDB
+import pymongo
+
+
+# Connect to Facebook Graph
 from facebook import GraphAPI
 fb_key = ''
 with open('/var/www/bigapp/key.txt', 'r') as f:
     fb_key  = f.read().replace('\n', '')
 graph = GraphAPI(access_token=fb_key)
+
+
 demo = {}
 @app.route('/demo/<name>',methods=['GET'])
 def class_demo(name):
@@ -27,13 +43,10 @@ def update(id, fields):
     print(id,message)
     demo[name] = message
 
-@app.before_request
-def log_request_info():
-    logging.debug('Headers: %s', request.headers)
-    logging.debug('Body: %s', request.get_data())
 
+# Receive Webhooks + authorize API
 @app.route('/facebook', methods=['GET', 'POST'])
-def handle_verification():
+def receive_webhook():
     if request.method == 'GET':
         return request.args['hub.challenge']
     else:
@@ -42,11 +55,11 @@ def handle_verification():
             id = entry['id']
             fields = entry['changed_fields']
             update(id,fields)
-        return 'OK'
+        return '', 200
 
+
+# Test to make sure Flask server works. Just connecting to bigbro.ml will not use
+# Flask server, need this route
 @app.route('/test', methods=['GET'])
 def index():
     return 'Test: OK'
-
-if __name__ == '__main__':
-    app.run(debug=True, port=3000)
