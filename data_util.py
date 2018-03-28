@@ -1,14 +1,18 @@
 import math
 from facebook import GraphAPI
 
+# Project Dependencies
+from user_mod import User
+
 
 graph = None
+
 
 def initFB():
     global graph
     # Connect to Facebook Graph
     fb_key = ''
-    with open('/var/www/bigapp/key.txt', 'r') as f:
+    with open('/var/www/bigapp/fb_graph.key', 'r') as f:
         fb_key = f.read().replace('\n', '')
     graph = GraphAPI(access_token=fb_key)
 
