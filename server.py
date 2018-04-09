@@ -31,8 +31,8 @@ def get_user_by_name(token):
 
     # authenticate
     fb = graph.request('debug_token', args={'input_token':token})['data']
-    if 'user_id' not in fb:
-        return 'expired'
+    if fb == None or 'user_id' not in fb:
+        return 'invalid token, may be expired'
 
     id = fb['user_id']
     args = {'id': id, 'fields': 'last_name,first_name'}
