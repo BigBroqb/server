@@ -2,17 +2,15 @@
 from flask import Flask, request, jsonify
 import logging
 from datetime import datetime
+from facebook import GraphAPI
 
 # Project Dependencies
 from user import User
-from database import *
-from facebook import GraphAPI
+import database as db
+import config
 
 
-FB_APP_SECRET = ''
-FB_APP_ID = ''
-graph = GraphAPI(access_token=FB_APP_SECRET)
-
+graph = GraphAPI(access_token=config.FB_APP_SECRET)
 app = Flask(__name__)
 
 
@@ -35,22 +33,11 @@ def get_user_by_name(token):
         
     id = fb['user_id']
     args = {'id': id, 'fields': 'last_name, first_name, gender, birthday, location'}
-    fb_data = graph.get_object(**args)
-    print(fb_data)
-    user = User(id, 
-        fb_data['first_name'] if 'first_name' in fb_data else None,
-        fb_data['last_name'] if 'last_name' in fb_data else None, 
-        fb_data['gender'] if 'gender' in fb_data else None, 
-        fb_data['birthday'] if 'birthday' in fb_data else None, 
-        fb_data['location'] if 'location' in fb_data else None)
+    fb_data = graph.get_object(**args)    
+    user = User(id, fb_data)
 
-    # # check if user exists in database
-    # if get_user_data(user.export_dict()) != None:
-    #     # if exists update in database
-    #     update_user_data(user.export_dict())
-    # else:
-    #     # if not exists put in database
-    #     add_user_data(user.export_dict())
+    if db.add_user_data(user) == 409: # HTTP code for conflict
+        db.update_user_data(user)
 
     return jsonify(user.export_dict())
 
