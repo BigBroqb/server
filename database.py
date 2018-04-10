@@ -33,8 +33,8 @@ def num_users():
 	"""Returns the current number of existing user entries in the db"""
 	return users.count()
 
-user = {"_id": 1, "firstname": "Connor", "lastname": "Hebert", "dob": "11/08/1996", "location": "East Longmeadow", "posts": [], "gender": "Male"}
+# user = {"_id": 1, "firstname": "Connor", "lastname": "Hebert", "dob": "11/08/1996", "location": "East Longmeadow", "posts": [], "gender": "Male"}
 
-#add_user_data(user)
-user = get_user_data(user)
-print(user.firstname)
+# #add_user_data(user)
+# user = get_user_data(user)
+# print(user.firstname)

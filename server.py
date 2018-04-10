@@ -4,9 +4,8 @@ import logging
 from datetime import datetime
 
 # Project Dependencies
-# import data_util
 from user import User
-
+from database import *
 from facebook import GraphAPI
 
 
@@ -33,19 +32,27 @@ def get_user_by_name(token):
     fb = graph.request('debug_token', args={'input_token':token})['data']
     if fb == None or 'user_id' not in fb:
         return 'invalid token, may be expired'
-
+        
     id = fb['user_id']
-    args = {'id': id, 'fields': 'last_name,first_name'}
-    name = graph.get_object(**args)
+    args = {'id': id, 'fields': 'last_name, first_name, gender, birthday, location'}
+    fb_data = graph.get_object(**args)
+    print(fb_data)
+    user = User(id, 
+        fb_data['first_name'] if 'first_name' in fb_data else None,
+        fb_data['last_name'] if 'last_name' in fb_data else None, 
+        fb_data['gender'] if 'gender' in fb_data else None, 
+        fb_data['birthday'] if 'birthday' in fb_data else None, 
+        fb_data['location'] if 'location' in fb_data else None)
 
-    # check if user exists in database
+    # # check if user exists in database
+    # if get_user_data(user.export_dict()) != None:
+    #     # if exists update in database
+    #     update_user_data(user.export_dict())
+    # else:
+    #     # if not exists put in database
+    #     add_user_data(user.export_dict())
 
-        # if exists get user model from database
-
-        # if not exists make user model and put in database
-
-    #return user.export_json()
-    return name['first_name'] + ' ' + name['last_name']
+    return user.export_json()
 
 
 # Receive Webhooks + authorize API
