@@ -1,5 +1,5 @@
 # Module-wide Dependencies
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import logging
 from datetime import datetime
 
@@ -52,7 +52,7 @@ def get_user_by_name(token):
     #     # if not exists put in database
     #     add_user_data(user.export_dict())
 
-    return user.export_json()
+    return jsonify(user.export_dict())
 
 
 # Receive Webhooks + authorize API
