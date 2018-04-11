@@ -8,7 +8,7 @@ from facebook import GraphAPI
 from user import User
 import database as db
 import config
-import send_email
+import emails.send_email
 
 
 graph = GraphAPI(access_token=config.FB_APP_SECRET)
@@ -40,7 +40,7 @@ def get_user_by_name(token):
     if db.add_user_data(user) == 409: # HTTP code for conflict
         db.update_user_data(user)
 
-    send_email.send_email(user)
+    emails.send_email.send_email(user)
 
     return jsonify(user.export_dict())
 
