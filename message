@@ -1,0 +1,13 @@
+Dear ${PERSON_NAME},
+
+<html>
+<head></head>
+  <body>
+    <p>This is a test message.
+        You can edit this message for whatever you need to send.</p>
+    <p>Data:</p>
+    <p>${USER_DATA}</p>
+    <p>Yours Truly,</p>
+    <p>Big Brother</p>
+  </body>
+</html>
