@@ -4,7 +4,7 @@ from user import User
 import config
 
 client = MongoClient(config.MONGO_URL)
-db = client.facebook #defines database to use
+db = client.test #defines database to use
 users = db.users #defines collection within database to use
 
 def add_user_data(user):
