@@ -22,6 +22,12 @@ app = Flask(__name__)
 #     logging.debug('Headers: %s', request.headers)
 #     logging.debug('Body: %s', request.get_data())
 
+def get_user_from_fb(id):
+    args = {'id': id, 'fields': 'last_name, first_name, gender, birthday, location'}
+    fb_data = graph.get_object(**args)    
+    user = User(id, fb_data)
+    return user
+
 
 # Retrieve data on user given facebook token
 @app.route('/user/<token>', methods=['GET']) # reconsider using urls
@@ -31,11 +37,8 @@ def get_user_by_name(token):
     fb = graph.request('debug_token', args={'input_token':token})['data']
     if fb == None or 'user_id' not in fb:
         return 'invalid token, may be expired'
-        
-    id = fb['user_id']
-    args = {'id': id, 'fields': 'last_name, first_name, gender, birthday, location'}
-    fb_data = graph.get_object(**args)    
-    user = User(id, fb_data)
+
+    user = get_user_from_fb(fb['user_id'])
 
     if db.add_user_data(user) == 409: # HTTP code for conflict
         db.update_user_data(user)
@@ -54,10 +57,11 @@ def receive_webhook():
 
     content = request.get_json()
     for entry in content['entry']:
-        id = entry['id']
-        fields = entry['changed_fields']
-        print("Received a webhook for these fields:", fields)
-        data_util.process(id, fields)
+        print('Received webhook for',entry['id'])
+        user = get_user_from_fb(entry['id'])
+        if db.add_user_data(user) == 409: # HTTP code for conflict
+            db.update_user_data(user)
+
     return '', 200
 
 
