@@ -34,8 +34,8 @@ def read_template(filename):
     return Template(template_file_content)
 
 def send_email(user):
-    names, emails = get_contacts('./emails/contacts')  # read contacts
-    message_template = read_template('./emails/message')
+    names, emails = get_contacts('home/bb/server/emails/contacts')  # read contacts
+    message_template = read_template('home/bb/server/emails/message')
     user_data = str(user)
     # set up the SMTP server
     s = smtplib.SMTP(host='smtp.gmail.com', port=587)
