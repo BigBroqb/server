@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 import logging
 from datetime import datetime
 from facebook import GraphAPI
+from celery import Celery
 
 # Project Dependencies
 from user import User
@@ -13,7 +14,16 @@ import emails.send_email
 
 graph = GraphAPI(access_token=config.FB_APP_SECRET)
 app = Flask(__name__)
+#app.config['CELERY_BROKER_URL'] = 'redis://:GSy5Nv2s2ekhbBxBE8ivRIAcfnpR0Oqm@redis-16637.c14.us-east-1-3.ec2.cloud.redislabs.com:16637'
+#app.config['CELERY_RESULT_BACKEND'] = 'redis://:GSy5Nv2s2ekhbBxBE8ivRIAcfnpR0Oqm@redis-16637.c14.us-east-1-3.ec2.cloud.redislabs.com:16637'
 
+#celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+#celery.conf.update(app.config)
+
+#@celery.task
+#def send_async_email(user):
+#    with app.app_context():
+#        emails.send_email.send_email(user)
 
 # # Add logging
 # logging.basicConfig(filename="/var/www/bigapp/logs/" + datetime.now().strftime('bigapp_%Y_%m_%d_%H_%M.log'), level=logging.DEBUG)
@@ -43,7 +53,7 @@ def get_user_by_name(token):
     if db.add_user_data(user) == 409: # HTTP code for conflict
         db.update_user_data(user)
 
-    emails.send_email.send_email(user)
+    #send_async_email(user)
 
     return jsonify(user.export_dict())
 
