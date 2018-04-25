@@ -3,7 +3,7 @@ Dear ${PERSON_NAME},
 <html>
 <head></head>
   <body>
-    <p>This is a test message.
+    <p>This is a test message. Async.
         You can edit this message for whatever you need to send.</p>
     <p>Data:</p>
     <p>${USER_DATA}</p>

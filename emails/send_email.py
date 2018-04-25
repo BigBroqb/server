@@ -1,11 +1,18 @@
 import smtplib
 import config
+from emails.Monitor import Monitor
+import time
+import datetime
+import sched
+import pytz
 
 from string import Template
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
+s = sched.scheduler(time.time, time.sleep)
 
 
 def get_contacts(filename):
@@ -33,7 +40,16 @@ def read_template(filename):
         template_file_content = template_file.read()
     return Template(template_file_content)
 
+
 def send_email(user):
+    u = datetime.datetime.utcnow()
+    u = u.replace(tzinfo=pytz.utc)
+    m = Monitor(s, user, send_email_task,
+                u+datetime.timedelta(0, 8))
+    m.start()
+
+
+def send_email_task(user):
     names, emails = get_contacts('./emails/contacts')  # read contacts
     message_template = read_template('./emails/message')
     user_data = str(user)
