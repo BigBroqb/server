@@ -4,12 +4,9 @@
 # MongoDB https://docs.mongodb.com/manual/installation/
 # PyMongo https://api.mongodb.com/python/current/installation.html
 
-# For testing the database, you can create a folder in the root folder called 'config' with an __init__.py file containing the line <MONGO_URL = 'mongodb://localhost:27017/'>. This makes the folder a python module, so it can be imported. Make sure there aren't any other modules named 'config'.
-
 # Ex. directory structure:
 # root/
-#   config/
-#     __init__.py
+#   config.py
 #   qb_unittests.py (this file)
 #   database.py
 #   server.py
@@ -20,19 +17,21 @@
 # How to use Mongo shell https://docs.mongodb.com/manual/mongo/
 
 import unittest
-import pymongo
+from pymongo import MongoClient
 import config # User-defined module
 import sys
 from pymongo.errors import ServerSelectionTimeoutError
 from user import User
-from database import *
+from database import*
+from server import*
+from facebook_test_users import create_test_user, delete_test_user
 
 # Test class for user.py
 class UserTestCase(unittest.TestCase):
 	def setUp(self):
 		self.id = 1
-		self.args = {"id": self.id, "fields": "Doe, Jane, Female, 1/1/1999, Boston"}
-		self.expected_dict = {"_id": 1, "fields": "Doe, Jane, Female, 1/1/1999, Boston"}
+		self.args = {"id": self.id, "last name": "Doe", "first name": "Jane", "gender": "Female", "DOB": "1/1/1999", "city" : "Boston"}
+		self.expected_dict = {"_id": 1, "last name": "Doe", "first name": "Jane", "gender": "Female", "DOB": "1/1/1999", "city": "Boston"}
 	
 	def test__init__with_no_data(self):
 		user = User(self.id)
@@ -56,7 +55,7 @@ class UserTestCase(unittest.TestCase):
 		
 		# Export JSON for user with data
 		user = User(self.id, self.args)
-		self.assertEqual('{"_id": 1, "fields": "Doe, Jane, Female, 1/1/1999, Boston"}',
+		self.assertEqual('{"_id": 1, "last name": "Doe", "first name": "Jane", "gender": "Female", "DOB": "1/1/1999", "city": "Boston"}',
 			(user.export_json()))
 			
 	def test_export_dict(self):
@@ -80,15 +79,13 @@ class UserTestCase(unittest.TestCase):
 
 # Test class for database.py
 # A MongoDB instance should be running on config.MONGO_URL 
-# config.MONGO_URL can be set to the default host and port (see comments at top)
+# config.MONGO_URL can be set to the default host and port
 class DatabaseTestCase(unittest.TestCase):
 	def setUp(self):
 		try:
-			max_server_selection_delay = 1
 			# Make a mongo client just to test if the MongoDB instance is running
 			# We won't actually use this client
-			test_client = pymongo.MongoClient(config.MONGO_URL, 
-				serverSelectionTimeoutMS = max_server_selection_delay)
+			test_client = MongoClient(config.MONGO_URL, serverSelectionTimeoutMS=1000)
 			test_client.server_info() # Force connection on a request
 			test_client.close()
 		except ServerSelectionTimeoutError:
@@ -100,8 +97,8 @@ class DatabaseTestCase(unittest.TestCase):
 		users.delete_many({})
 		
 		self.id = 1
-		self.args = {"id": self.id, "fields": "Doe, Jane, Female, 1/1/1999, Boston"}
-		self.expected_dict = {"_id": 1, "fields": "Doe, Jane, Female, 1/1/1999, Boston"}
+		self.args = {"id": self.id, "last name": "Doe", "first name": "Jane", "gender": "Female", "DOB": "1/1/1999", "city" : "Boston"}
+		self.expected_dict = {"_id": 1, "last name": "Doe", "first name": "Jane", "gender": "Female", "DOB": "1/1/1999", "city": "Boston"}
 		self.user = User(self.id, self.args)
 		self.invalid_user = 0
 	
@@ -177,7 +174,7 @@ class DatabaseTestCase(unittest.TestCase):
 		self.assertEqual(0, result.modified_count)
 		
 		# Update one user's data with different data
-		updated_args = {"id": self.id, "fields": "Doe, Jane, Female, 1/1/1999, New York"}
+		updated_args = {"id": self.id, "last name": "Doe", "first name": "Jane", "gender": "Female", "DOB": "1/1/1999", "city" : "New York"}
 		updated_user = User(self.id, updated_args)
 		result = update_user_data(updated_user)
 		self.assertEqual(1, result.matched_count)
@@ -204,6 +201,28 @@ class DatabaseTestCase(unittest.TestCase):
 		users.delete_one({"_id": self.user._id})
 		self.assertEqual(0, num_users())
 		
+class ServerTestCase(unittest.TestCase):
+	def setUp(self):
+		self.test_user = create_test_user(config.FB_APP_ID, graph)
+		
+	def tearDown(self):
+		delete_test_user(graph, self.test_user['id'])
+		
+	def test_get_user_from_fb(self):
+		user = get_user_from_fb(self.test_user['id'])
+		self.assertEqual(self.test_user['id'], user.export_dict()['_id'])
+	
+	def test_get_user_by_name(self):
+		pass
+		
+	def test_receive_webhook(self):
+		pass
+		
+	def test_index(self):
+		pass
+		
+		
+		
 def suite():
 	suite = unittest.TestSuite()
 	suite.addTest(UserTestCase('test__init__with_no_data'))
@@ -217,18 +236,18 @@ def suite():
 	suite.addTest(DatabaseTestCase('test_remove_user_data'))
 	suite.addTest(DatabaseTestCase('test_update_user_data'))
 	suite.addTest(DatabaseTestCase('test_num_users'))
+	suite.addTest(ServerTestCase('test_get_user_from_fb'))
 	return suite
 	
 if __name__ == '__main__':
-	if (config.MONGO_URL != "mongodb://localhost:27017/"):
-			warning = "\nWarning: config.MONGO_URL is set to " + config.MONGO_URL + "\nTesting deletes all documents from the specified collection '" + str(users.full_name) + "'.\nYou can quit and change config.MONGO_URL to mongodb://localhost:27017/ for testing, or you can proceed. Proceed? Y/N\n"
-			while True:
-				# Person testing needs to type "Y", "y", "N", or "n" into console
-				input_string = input(warning).lower()
-				if (input_string == "y"):
-					break
-				if (input_string == "n"):
-					sys.exit()
+	warning = "\nconfig.MONGO_URL is set to " + config.MONGO_URL + "\nTesting will delete all documents from the specified collection '" + str(users.full_name) + "'.\nProceed? Y/N\n"
+	while True:
+		# Person testing needs to type "Y", "y", "N", or "n" into console
+		input_string = input(warning).lower()
+		if (input_string == "y"):
+			break
+		if (input_string == "n"):
+			sys.exit()
 					
 	# Set limit for number of levels of traceback information
 	sys.tracebacklimit = 1 
